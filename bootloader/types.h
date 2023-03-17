@@ -1,4 +1,7 @@
 #pragma once
+
+#define PACKED __attribute__((packed))
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -14,3 +17,4 @@
 #define u32 uint32_t
 #define u64 uint64_t
 #define usize size_t
+#define uint unsigned

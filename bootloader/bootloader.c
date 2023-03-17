@@ -13,11 +13,35 @@ struct PACKED payload {
 extern const struct payload payload;
 
 void kmain() {
-  uart_init(2000000);
-  INFO("bootloader init\n");
-  psram_init();
+  {
+    INFO("uart init\n");
+    uart_init(2000000);
 
-  INFO("psram is initialized\n");
+    gpio_set_function(14, GPIO_UART);
+    gpio_set_function(15, GPIO_UART);
+
+    uartmux_configure(uartmux_signal_number(14), 0, UARTMUX_TX);
+    uartmux_configure(uartmux_signal_number(15), 0, UARTMUX_RX);
+  }
+  INFO("bootloader init\n");
+  {
+    INFO("psram init\n");
+    psram_init();
+    INFO("psram check\n");
+    volatile u32 *psram = (volatile u32 *)0x50000000;
+    put32(psram, 0xdeadbeef);
+    u32 x = get32(psram);
+    INFO("read back 0x%x\n", x);
+    if (x != 0xdeadbeef) {
+      ERROR("psram init failed!\n");
+      while(1);
+    }
+    INFO("psram init success\n");
+  }
+  INFO("timer init\n");
+  timer_init(1000000);
+  INFO("have timer = %d\n", timer_read());
+
   INFO("magic = 0x%x\n", payload.magic);
   INFO("addr = 0x%lx\n", payload.entry);
   INFO("size = 0x%x\n", payload.size);

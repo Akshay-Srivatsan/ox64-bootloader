@@ -1,7 +1,5 @@
 #pragma once
 
-#define PACKED __attribute__((packed))
-
 #include "log.h"
 
 #include "types.h"
@@ -11,7 +9,10 @@
 #include "delay.h"
 #include "memory.h"
 #include "uart.h"
+#include "uartmux.h"
+#include "gpio.h"
 #include "psram.h"
+#include "timer.h"
 
 #include "printk.h"
 #include "crc32.h"
