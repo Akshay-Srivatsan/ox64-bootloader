@@ -3,7 +3,6 @@
 #include "lib.h"
 
 struct PACKED payload {
-  uint32_t magic;
   uint64_t entry;
   uint32_t size;
   uint32_t cksum;
@@ -41,18 +40,10 @@ void kmain() {
   TRACE("timer init\n");
   timer_init(1000000);
 
-  INFO("magic = 0x%x\n", payload.magic);
   INFO("addr = 0x%lx\n", payload.entry);
   INFO("size = 0x%x\n", payload.size);
   INFO("cksum = 0x%x\n", payload.cksum);
 
-  if (payload.magic != 0x12b9b0a1) {
-    ERROR("invalid magic number\n");
-    ERROR("refusing to boot\n");
-    while(1);
-  } else {
-    INFO("valid magic: 0x%x == %d\n", payload.magic, payload.magic);
-  }
   DEBUG("copying %d bytes of code to address %p\n", payload.size, payload.entry);
   memcpy((void *)payload.entry, payload.data, payload.size);
 
