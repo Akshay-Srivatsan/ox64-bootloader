@@ -2,6 +2,7 @@
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL 3
+#warning "No log level set, defaulting to 3 (INFO)"
 #endif
 
 #if LOG_LEVEL >= 1

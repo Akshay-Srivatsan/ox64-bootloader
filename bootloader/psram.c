@@ -1,7 +1,9 @@
+#define LOG_LEVEL 3
+
 #include "lib.h"
 
 #define check_that(X, L) \
-    { if (!(X)) { DEBUG("Brutus check failed on line " #L "\n"); } else { DEBUG("Brutus check passed on line " #L "\n"); } }
+    { if (!(X)) { WARN("Brutus check failed on line " #L "\n"); } else { DEBUG("Brutus check passed on line " #L "\n"); } }
 
 void psram_init(void) {
     uint32_t read_0 = get32((uint32_t*)(0x20056800));
