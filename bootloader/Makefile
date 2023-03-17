@@ -19,10 +19,13 @@ CFLAGS=$(COMMON_FLAGS) -O$(OPT)
 ASFLAGS=$(COMMON_FLAGS)
 LDFLAGS=-nostdlib
 
-all: $(TARGET)
+all: tags $(TARGET)
 
 clean:
-	rm -f *.o *.elf *.bin *.d
+	rm -f *.o *.elf *.bin *.d tags
+
+tags:
+	ctags *.[chS]
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(wildcard *.d)
