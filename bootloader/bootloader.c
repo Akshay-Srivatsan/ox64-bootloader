@@ -11,7 +11,7 @@ struct PACKED payload {
 
 extern const struct payload payload;
 
-#define CLOCK 1000000
+#define CLOCK 16000000
 #define CKSUM 1
 
 void kmain() {
