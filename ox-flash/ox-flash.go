@@ -28,9 +28,12 @@ func exists(f string) bool {
 
 var baud = flag.Uint("baud", 2000000, "baud rate")
 var file = flag.String("port", "", "serial port")
-var keep_open = flag.Bool("keep-open", false, "keep the serial port open after flashing")
-var payload = flag.Bool("payload", false, "flash a payload (not firmware)")
-var addr = flag.Uint("addr", 0, "the address to flash to (0x0 for firmware, 0x10000 for a payload)")
+var run = flag.Bool("run", false, "exit the bootrom and run the program from flash")
+var echo = flag.Bool("echo", false, "echo bytes received from the serial port after flashing")
+var echo_baud = flag.Uint("echo-baud", 115200, "baud rate for echoing")
+var bootloader = flag.Bool("bootloader", false, "flash a bootloader")
+var payload = flag.Bool("payload", false, "flash a payload")
+var addr = flag.Uint("addr", 0, "the address to flash to (default: 0x0 for firmware, 0x10000 for a payload)")
 
 var autodetect = []string{
 	"/dev/ttyACM0",
@@ -53,8 +56,12 @@ func main() {
 		}
 	}
 
-	if *keep_open && *payload {
-		log.Fatal("the --keep-open and --payload")
+	if !*bootloader && !*payload {
+		log.Fatal("must specify one of --bootloader or --payload")
+	}
+
+	if *echo && !*run {
+		log.Fatal("the --echo option requires the --run option")
 	}
 
 	filetype := "firmware"
@@ -92,17 +99,14 @@ func main() {
 		log.Fatalf("uart open: %v", err)
 	}
 
-	fmt.Printf("Connected to %s, baud: %d\n", options.PortName, options.BaudRate)
-	if *keep_open {
-		fmt.Println("Keeping connection open after flashing.")
-	}
+	log.Printf("Connected to %s, baud: %d\n", options.PortName, options.BaudRate)
 
 	jedec, err := handshake(port, options.BaudRate)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Have %s file: %s\n", filetype, fw)
+	log.Printf("Have %s file: %s\n", filetype, fw)
 	fw_data, err := os.ReadFile(fw)
 	if err != nil {
 		log.Fatal(err)
@@ -120,33 +124,48 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Writing bootrom-compatible header at 0x0000")
+		log.Println("Writing bootrom-compatible header at 0x0000")
 		err = flash(port, 0, bh.Bytes())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Writing firmware at 0x%x\n", *addr)
+		log.Printf("Writing firmware at 0x%x\n", *addr)
 		err = flash(port, uint32(*addr)+0x2000, fw_data)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		err = boot(port)
-		if err != nil {
-			log.Fatal(err)
-		}
 	} else {
-		fmt.Printf("Writing payload at 0x%x\n", *addr)
+		log.Printf("Writing payload at 0x%x\n", *addr)
 		err = flash(port, uint32(*addr)+0x2000, fw_data)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	fmt.Println("Done flashing!")
+	log.Println("Done flashing!")
 
-	if *keep_open {
+	if *run {
+		log.Println("Running binary from flash.")
+		err = boot(port)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if *echo {
+		if *echo_baud != *baud {
+			log.Printf("Switching from %d baud to %d baud.\n", *baud, *echo_baud)
+			options.BaudRate = *echo_baud
+			err := port.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+			port, err = serial.Open(options)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		fmt.Println("Echoing from board...")
 		fmt.Println("---------------------")
 		carriage_return := false
