@@ -1,8 +1,8 @@
 #include "crc32.h"
 
-/* ***********************************************************************
- * Simple public domain implementation of the standard CRC32 checksum.
- * http://home.thep.lu.se/~bjorn/crc/crc32_simple.c
+/*
+ * Based on
+ * https://github.com/dddrrreee/cs140e-23win/blob/main/libpi/libc/crc.c
  */
 
 static uint32_t crc32_tab[] = {

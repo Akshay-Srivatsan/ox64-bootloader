@@ -12,19 +12,19 @@ LD=$(PREFIX)-ld
 OBJDUMP=$(PREFIX)-objdump
 OBJCOPY=$(PREFIX)-objcopy
 
-OPT ?= 0
+OPT ?= 3
 
 COMMON_FLAGS=-MMD -ffreestanding -nostdlib -nostartfiles -march=rv64imafc -mabi=lp64
 CFLAGS=$(COMMON_FLAGS) -O$(OPT)
 ASFLAGS=$(COMMON_FLAGS)
-LDFLAGS=-nostdlib
+LDFLAGS=-nostdlib -flto
 
 all: tags $(TARGET)
 
 clean:
 	rm -f *.o *.elf *.bin *.d tags
 
-tags:
+tags: $(wildcard *.[chS])
 	ctags *.[chS]
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -45,7 +45,7 @@ bootloader.elf: memmap.ld $(OBJ)
 	$(CC) -c $< $(CFLAGS) -o $@
 
 run: $(TARGET)
-	ox-flash --keep-open $(TARGET)
+	ox-flash --bootloader --run --echo $(TARGET)
 
 .PHONY: all clean run
 .PRECIOUS: %.list
