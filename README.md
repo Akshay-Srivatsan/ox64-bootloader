@@ -16,11 +16,12 @@ minimal flashing tool and bootloader which are completely standalone.
 
 The Ox64 has an unusual architecture; it has three CPUs with different ISAs.
 
-* The "D0" (or "MM") CPU is the primary one; it is an RV64IMAFC T-Head C906
-  core running at 480 MHz.  It has an MMU and is capable of running Linux.
-* The "M0" CPU is a device coprocessor; it is an RV32IMAFC T-Head E906 core
-  running at 320 MHz.  Annoyingly, many devices only send interrupts to this
-  core, so it needs to relay them to the D0.
+* The "D0" (or "MM", or "DSP") CPU is the primary one; it is an RV64IMAFC
+  T-Head C906 core running at 480 MHz.  It has an MMU and is capable of running
+  Linux.
+* The "M0" (or "MCU") CPU is a device coprocessor; it is an RV32IMAFC T-Head
+  E906 core running at 320 MHz.  Annoyingly, many peripherals only send
+  interrupts to this core, so it needs to relay them to the D0.
 * The "LP" CPU is a low-power coprocessor; it is an RV32EMC T-Head E902 core
   running at 150 MHz.  Not much is known about this CPU.
 
@@ -66,7 +67,7 @@ The default SDK does many different setup steps.  For now, the bootloader only d
 - [x] Copies the payload out of flash into PSRAM.
 - [x] Starts running the payload on the D0.
 - [ ] Initalizes JTAG so the payload can be debugged.
-- [ ] Starts an M0 helper program to forward device interrupts to the D0.
+- [ ] Starts an M0 helper program to forward peripheral interrupts to the D0.
 
 ## Payload
 
