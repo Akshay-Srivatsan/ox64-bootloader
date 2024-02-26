@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"hash/crc32"
 	"log"
 	"os"
 
@@ -32,13 +33,21 @@ var run = flag.Bool("run", false, "exit the bootrom and run the program from fla
 var echo = flag.Bool("echo", false, "echo bytes received from the serial port after flashing")
 var echo_baud = flag.Uint("echo-baud", 115200, "baud rate for echoing")
 var bootloader = flag.Bool("bootloader", false, "flash a bootloader")
-var payload = flag.Bool("payload", false, "flash a payload")
+var payload = flag.Bool("payload", false, "flash a payload with a header")
+var entry = flag.Uint("entry", 0x50000000, "the entry address of the payload")
+var raw_payload = flag.Bool("raw-payload", false, "flash a payload without prepending a header")
 var addr = flag.Uint("addr", 0, "the address to flash to (default: 0x0 for firmware, 0x10000 for a payload)")
 
 var autodetect = []string{
 	"/dev/ttyACM0",
 	"/dev/ttyUSB0",
 	"/dev/ttyUSB1",
+}
+
+type BootInfoBlock struct {
+	Entry uint64
+	Size  uint32
+	Cksum uint32
 }
 
 func main() {
@@ -57,7 +66,7 @@ func main() {
 	}
 
 	if !*bootloader && !*payload {
-		log.Fatal("must specify one of --bootloader or --payload")
+		log.Fatal("must specify one of --bootloader or --payload or --raw-payload")
 	}
 
 	if *echo && !*run {
@@ -112,6 +121,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if *raw_payload {
+		*payload = true
+	}
+
 	if !*payload {
 		info, err := CreateBootInfo(jedec, fw_data, uint32(*addr))
 		if err != nil {
@@ -136,10 +149,29 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		log.Printf("Writing payload at 0x%x\n", *addr)
-		err = flash(port, uint32(*addr)+0x2000, fw_data)
-		if err != nil {
-			log.Fatal(err)
+		if *raw_payload {
+			log.Printf("Writing raw payload at 0x%x\n", *addr)
+			err = flash(port, uint32(*addr)+0x2000, fw_data)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Printf("Writing payload at 0x%x\n", *addr)
+			data := bytes.Buffer{}
+			info := BootInfoBlock{
+				Entry: uint64(*entry),
+				Size:  uint32(len(fw_data)),
+				Cksum: crc32.ChecksumIEEE(fw_data),
+			}
+			err = binary.Write(&data, binary.LittleEndian, &info)
+			if err != nil {
+				log.Fatal(err)
+			}
+			data.Write(fw_data)
+			err = flash(port, uint32(*addr)+0x2000, data.Bytes())
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 

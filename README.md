@@ -38,10 +38,14 @@ Usage of ox-flash:
     	echo bytes received from the serial port after flashing
   -echo-baud uint
     	baud rate for echoing (default 115200)
+  -entry uint
+    	the entry address of the payload (default 1342177280)
   -payload
-    	flash a payload
+    	flash a payload with a header
   -port string
     	serial port
+  -raw-payload
+        flash a payload without prepending a header
   -run
     	exit the bootrom and run the program from flash
 ```
@@ -53,11 +57,14 @@ tells the bootrom to run the provided binary on the 64-bit "D0" core.
 Note that the addresses provided here are actually offsets within flash, which
 itself is at `0x58000000`.  Payloads should instead be linked to absolute
 physical addresses within PSRAM (e.g., `0x50000000`); the bootloader will take
-care of copying the binary to the requested address.
+care of copying the binary to the requested address.  See the `payloads`
+directory for an example.
 
 ## Bootloader
 
-The default SDK does many different setup steps.  For now, the bootloader only does the bare minimum necessary to have a useable computing environment; a few more steps are necessary for a truly useful setup.
+The default SDK does many different setup steps.  For now, the bootloader only
+does the bare minimum necessary to have a useable computing environment; a few
+more steps are necessary for a truly useful setup.
 
 - [x] Initializes UART0 at 115200 baud.
 - [x] Configures pins 14 and 15 as UART pins.
@@ -71,7 +78,8 @@ The default SDK does many different setup steps.  For now, the bootloader only d
 
 ## Payload
 
-The payload is a 64-bit RISC-V binary with a simple header prefixed:
+The payload expected by the bootloader is a 64-bit RISC-V binary with a simple
+header prefixed:
 ```C
 struct payload {
   uint64_t entry; // the load address of the binary
@@ -80,6 +88,11 @@ struct payload {
   uint8_t data[]; // the binary itself
 };
 ```
+
+The `ox-flash` tool will automatically add this header, assuming the entry is
+`0x50000000` (the beginning of the payload once copied into RAM) by default.
+The entry address can be controlled with the `--entry` option, and the payload
+can be omitted entirely with the `--raw-payload` option.
 
 The payload will be executed in *m-mode*, with full access to physical memory.
 The bootloader **does not** provide an SBI implementation; it is assumed that
