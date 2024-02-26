@@ -1,4 +1,5 @@
-TARGETS=hello.bin
+PAYLOADS=$(wildcard *.c)
+TARGETS=$(patsubst %.c,%.bin,$(PAYLOADS))
 
 ASM=$(wildcard lib/*.S)
 SRC=$(wildcard lib/*.c)

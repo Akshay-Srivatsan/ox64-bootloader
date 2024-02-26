@@ -58,7 +58,7 @@ Note that the addresses provided here are actually offsets within flash, which
 itself is at `0x58000000`.  Payloads should instead be linked to absolute
 physical addresses within PSRAM (e.g., `0x50000000`); the bootloader will take
 care of copying the binary to the requested address.  See the `payloads`
-directory for an example.
+directory for examples.
 
 ## Bootloader
 

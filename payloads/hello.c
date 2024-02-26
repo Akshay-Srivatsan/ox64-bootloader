@@ -5,7 +5,6 @@ void kmain(void) {
   while (true) {
     uart_puts("hello, world!\n");
     unsigned long start = timer_read();
-    while (timer_read() - start < 16000000 / 10) {
-    }
+    delay_ms(1000);
   }
 }
